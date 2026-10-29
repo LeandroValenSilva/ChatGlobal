@@ -1,0 +1,136 @@
+<div class="tarjeta-chat">
+    <header class="chat-encabezado">
+        <div class="chat-logo" aria-hidden="true">CG</div>
+
+        <div class="chat-titulos">
+            <h1>Chat global<span>.</span></h1>
+            <p>Una conversación. Muchas conexiones.</p>
+        </div>
+
+        <p id="contadorConectados" role="status">
+            Conectados (0)
+        </p>
+    </header>
+
+    <p
+        id="usuarioActual"
+        class="chat-sesion"
+        data-username="{{username}}"
+    >
+        Conectado como <strong>{{username}}</strong>
+    </p>
+
+    <ul id="mensajes"></ul>
+
+    <div class="chat-compositor">
+        <label for="inputMensaje" class="mensaje-etiqueta">
+            Tu mensaje
+        </label>
+
+        <form id="formularioMensaje">
+            <input
+                type="text"
+                id="inputMensaje"
+                placeholder="Escribe algo para compartir…"
+                maxlength="500"
+                autocomplete="off"
+                required
+            >
+
+            <button type="submit">
+                Enviar
+                <span aria-hidden="true">➤</span>
+            </button>
+        </form>
+
+        <p class="chat-ayuda">Presiona Enter para enviar.</p>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    const socket = io();
+
+    const usuarioActual = document.getElementById('usuarioActual');
+    const username = usuarioActual.dataset.username;
+
+    socket.on('connect', () => {
+        console.log('Nombre que voy a registrar:', username);
+        socket.emit('registrarUsuario', username);
+    });
+
+    const contadorConectados = document.getElementById('contadorConectados');
+
+    socket.on('usuariosConectados', (cantidad) => {
+        contadorConectados.textContent = `Conectados (${cantidad})`;
+    });
+
+    socket.on('disconnect', () => {
+        contadorConectados.textContent = 'Sin conexión';
+    });
+
+    const formulario = document.getElementById('formularioMensaje');
+    const inputMensaje = document.getElementById('inputMensaje');
+    const listaMensajes = document.getElementById('mensajes');
+
+    formulario.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const texto = inputMensaje.value.trim();
+
+        if (!texto) {
+            return;
+        }
+
+        socket.emit('enviarMensaje', texto);
+
+        inputMensaje.value = '';
+        inputMensaje.focus();
+    });
+
+    socket.on('nuevoMensaje', (mensaje) => {
+        const elemento = document.createElement('li');
+
+        if (mensaje.emisorId === socket.id) {
+            elemento.classList.add('mensaje-propio');
+        }
+
+        const hora = new Date(mensaje.fecha).toLocaleTimeString('es-CO', {
+            timeZone: 'America/Bogota',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
+        const cabecera = document.createElement('div');
+        cabecera.classList.add('mensaje-cabecera');
+
+        const avatar = document.createElement('span');
+        avatar.classList.add('mensaje-avatar');
+        avatar.textContent = mensaje.username.charAt(0).toUpperCase();
+        avatar.setAttribute('aria-hidden', 'true');
+
+        const nombre = document.createElement('strong');
+        nombre.classList.add('mensaje-autor');
+
+        nombre.textContent = mensaje.emisorId === socket.id
+            ? 'Tú'
+            : mensaje.username;
+
+        cabecera.append(avatar, nombre);
+
+        const contenido = document.createElement('span');
+        contenido.classList.add('mensaje-texto');
+        contenido.textContent = mensaje.texto;
+
+        const horaElemento = document.createElement('time');
+        horaElemento.textContent = hora;
+        horaElemento.dateTime = mensaje.fecha;
+        horaElemento.classList.add('hora-mensaje');
+
+        elemento.append(cabecera, contenido, horaElemento);
+
+        listaMensajes.appendChild(elemento);
+    });
+</script>

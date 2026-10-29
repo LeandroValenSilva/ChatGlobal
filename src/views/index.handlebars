@@ -1,0 +1,30 @@
+<main class="tarjeta-ingreso">
+    <div class="chat-logo" aria-hidden="true">CG</div>
+
+    <h1>Chat global<span>.</span></h1>
+
+    <p class="ingreso-descripcion">
+        Una conversación. Muchas conexiones.
+        Elige tu nombre y únete.
+    </p>
+
+    <form action="/chat" method="GET" class="formulario-ingreso">
+        <label for="username">¿Cómo quieres que te llamen?</label>
+
+        <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Escribe tu nombre"
+            maxlength="30"
+            autocomplete="nickname"
+            required
+        >
+
+        <button type="submit">Entrar al chat →</button>
+    </form>
+
+    <p class="ingreso-nota">
+        Tu nombre será visible para los demás participantes.
+    </p>
+</main>
